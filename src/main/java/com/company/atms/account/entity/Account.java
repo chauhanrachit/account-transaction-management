@@ -35,8 +35,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "accounts", indexes = { @Index(name = "idx_account_number", columnList = "account_number", unique = true),
-		@Index(name = "idx_account_customer", columnList = "customer_id") })
+@Table(
+		name = "accounts", 
+		indexes = { 
+				@Index(name = "idx_account_number", columnList = "account_number", unique = true),
+				@Index(name = "idx_account_customer", columnList = "customer_id") 
+		}
+)
 @Getter
 @NoArgsConstructor
 public class Account {
@@ -55,11 +60,13 @@ public class Account {
 	private UUID id;
 
 	@NotNull
+	@Setter(AccessLevel.NONE)
 	@Column(name = "account_number", nullable = false, unique = true, length = 30)
 	private String accountNumber;
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
+	@Setter(AccessLevel.NONE)
 	@Column(name = "account_type", nullable = false, length = 30)
 	private AccountType accountType;
 
@@ -75,6 +82,7 @@ public class Account {
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
+	@Setter(AccessLevel.NONE)
 	@Column(name = "status", nullable = false, length = 20)
 	private AccountStatus accountStatus;
 
@@ -98,12 +106,13 @@ public class Account {
 		if (customer == null) {
 			throw new IllegalArgumentException("Customer is required");
 		}
+
 		this.accountNumber = accountNumber;
 		this.accountType = accountType;
 		this.currency = currency;
-		this.balance = BigDecimal.ZERO;
-		this.accountStatus = AccountStatus.ACTIVE;
 		this.customer = customer;
+		this.accountStatus = AccountStatus.ACTIVE;
+		this.balance = BigDecimal.ZERO;
 	}
 
 	public void credit(BigDecimal amount) {
@@ -131,8 +140,10 @@ public class Account {
 	}
 
 	public void addTransaction(Transaction tx) {
-		transactions.add(tx);
-		tx.setAccount(this);
+		if (!transactions.contains(tx)) {
+			transactions.add(tx);
+			tx.setAccount(this);
+		}
 	}
 
 	public void removeTransaction(Transaction tx) {
@@ -142,6 +153,17 @@ public class Account {
 
 	public void setCustomer(Customer customer) {
 		this.customer = customer;
+	}
+
+	public void freeze() {
+		if (this.accountStatus != AccountStatus.ACTIVE) {
+	        throw new IllegalStateException("Only ACTIVE accounts can be frozen");
+	    }
+	    this.accountStatus = AccountStatus.FROZEN;
+	}
+
+	public void close() {
+		this.accountStatus = AccountStatus.CLOSED;
 	}
 
 	@Override
@@ -164,8 +186,4 @@ public class Account {
 		return "Account{" + "id=" + id + ", accountNumber='" + accountNumber + '\'' + ", accountType=" + accountType
 				+ ", balance=" + balance + ", currency='" + currency + '\'' + ", status=" + accountStatus + '}';
 	}
-//	public void setCustomer(Customer customer2) {
-//		// TODO Auto-generated method stub
-//
-//	}
 }
