@@ -26,8 +26,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AuditLog {
 	/*
-	 * Tracks important actions. Entity: AuditLogEntity Fields: id entityType
-	 * entityId action performedBy timestamp metadata (JSON / String)
+	 * Tracks important actions. Entity: AuditLogEntity 
+	 * Fields: 
+	 * id entityType entityId action performedBy timestamp metadata (JSON / String)
 	 */
 	@Id
 	@UuidGenerator
