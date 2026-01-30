@@ -47,7 +47,7 @@ public class Transaction {
 	private UUID id;
 
 	@Column(name = "transaction_reference", nullable = false, unique = true, length = 50)
-	private String transactionReference = UUID.randomUUID().toString();
+	private String transactionReference;
 
 	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -81,47 +81,49 @@ public class Transaction {
 		this.account = account;
 	}
 
-	public Transaction(String transactionReference, Account account, TransactionType transactionType, BigDecimal amount,
-			String description) {
+	public static Transaction createPending(String transactionReference, Account account,
+			TransactionType transactionType, BigDecimal amount, String description) {
+		
 		if (amount == null || amount.signum() <= 0) {
-			throw new IllegalArgumentException("Transaction amount must be positive");
-		}
-
-		this.transactionReference = transactionReference;
-		this.account = account;
-		this.transactionType = transactionType;
-		this.amount = amount;
-		this.description = description;
-		this.transactionStatus = TransactionStatus.SUCCESS;
-		if (transactionType == TransactionType.DEBIT) {
-		    account.debit(amount);
-		} else {
-		    account.credit(amount);
-		}
+	        throw new IllegalArgumentException("Transaction amount must be positive");
+	    }
+		
+		Transaction tx = new Transaction();
+		tx.transactionReference = transactionReference;
+		tx.account = account;
+		tx.transactionType = transactionType;
+		tx.amount = amount;
+		tx.description = description;
+		tx.transactionStatus = TransactionStatus.PENDING;
+		return tx;
 	}
-	
+
+	public void markSuccess() {
+		this.transactionStatus = TransactionStatus.SUCCESS;
+	}
+
+	public void markFailed(String reason) {
+		this.transactionStatus = TransactionStatus.FAILED;
+	}
+
 	@Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Transaction)) return false;
-        Transaction other = (Transaction) o;
-        return id != null && id.equals(other.id);
-    }
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Transaction))
+			return false;
+		Transaction other = (Transaction) o;
+		return id != null && id.equals(other.id);
+	}
 
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
+	}
 
-    @Override
-    public String toString() {
-        return "Transaction{" +
-                "id=" + id +
-                ", reference='" + transactionReference + '\'' +
-                ", type=" + transactionType +
-                ", amount=" + amount +
-                ", status=" + transactionStatus +
-                ", createdAt=" + createdAt +
-                '}';
-    }
+	@Override
+	public String toString() {
+		return "Transaction{" + "id=" + id + ", reference='" + transactionReference + '\'' + ", type=" + transactionType
+				+ ", amount=" + amount + ", status=" + transactionStatus + ", createdAt=" + createdAt + '}';
+	}
 }
