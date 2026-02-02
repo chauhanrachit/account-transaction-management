@@ -9,5 +9,4 @@ public class AccountTransactionManagementApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(AccountTransactionManagementApplication.class, args);
 	}
-
 }

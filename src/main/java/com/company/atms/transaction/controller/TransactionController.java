@@ -1,5 +1,7 @@
 package com.company.atms.transaction.controller;
 
+import java.time.Instant;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -8,12 +10,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.company.atms.common.response.ApiResponse;
 import com.company.atms.transaction.dto.CreditRequest;
 import com.company.atms.transaction.dto.DebitRequest;
 import com.company.atms.transaction.dto.TransactionResponse;
 import com.company.atms.transaction.entity.Transaction;
 import com.company.atms.transaction.service.TransactionService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -28,43 +32,47 @@ public class TransactionController {
 	}
 
 	@PostMapping("/debit")
-	public ResponseEntity<TransactionResponse> debit(@Valid @RequestBody DebitRequest request) {
+	public ResponseEntity<ApiResponse<TransactionResponse>> debit(
+            @Valid @RequestBody DebitRequest request,
+            HttpServletRequest httpRequest) {
 
-		Transaction tx = transactionService.debit(
-				request.getAccountId(), 
-				request.getReference(),
-				request.getAmount(), 
-				request.getDescription()
-		);
+        Transaction tx = transactionService.debit(
+                request.getAccountId(),
+                request.getReference(),
+                request.getAmount(),
+                request.getDescription()
+        );
 
-		return ResponseEntity
-				.status(HttpStatus.CREATED)
-				.body(toResponse(tx));
-	}
+        return ResponseEntity.ok(
+                ApiResponse.<TransactionResponse>builder()
+                        .timestamp(Instant.now())
+                        .status(HttpStatus.OK.value())
+                        .message("Debit successful")
+                        .data(TransactionResponse.from(tx))
+                        .path(httpRequest.getRequestURI())
+                        .build()
+        );
+    }
 
 	@PostMapping("/credit")
-	public ResponseEntity<TransactionResponse> credit(@Valid @RequestBody CreditRequest request) {
+    public ResponseEntity<ApiResponse<TransactionResponse>> credit(
+            @Valid @RequestBody CreditRequest request, HttpServletRequest httpRequest) {
 
-		Transaction tx = transactionService.credit(
-				request.getAccountId(),
-				request.getReference(),
-				request.getAmount(), 
-				request.getDescription());
+        Transaction tx = transactionService.credit(
+                request.getAccountId(),
+                request.getReference(),
+                request.getAmount(),
+                request.getDescription()
+        );
 
-		return ResponseEntity
-				.status(HttpStatus.CREATED)
-				.body(toResponse(tx));
-	}
-	
-	private TransactionResponse toResponse(Transaction tx) {
-        return TransactionResponse.builder()
-                .transactionId(tx.getId())
-                .reference(tx.getTransactionReference())
-                .accountId(tx.getAccount().getId())
-                .type(tx.getTransactionType())
-                .amount(tx.getAmount())
-                .status(tx.getTransactionStatus())
-                .createdAt(tx.getCreatedAt())
-                .build();
+        return ResponseEntity.ok(
+                ApiResponse.<TransactionResponse>builder()
+                        .timestamp(Instant.now())
+                        .status(HttpStatus.OK.value())
+                        .message("Credit successful")
+                        .data(TransactionResponse.from(tx))
+                        .path(httpRequest.getRequestURI())
+                        .build()
+        );
     }
 }
