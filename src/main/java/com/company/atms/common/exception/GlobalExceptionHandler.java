@@ -79,4 +79,21 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
+    
+    @ExceptionHandler({
+        DuplicateTransactionException.class,
+        InvalidAccountStateException.class,
+        InsufficientBalanceException.class
+    })
+    public ResponseEntity<ErrorResponse> handleBusinessExceptions(RuntimeException ex, WebRequest request) {
+	    ErrorResponse response = ErrorResponse.builder()
+	            .timestamp(Instant.now())
+	            .status(HttpStatus.BAD_REQUEST.value())
+	            .error("Business Rule Violation")
+	            .message(ex.getMessage())
+	            .path(request.getDescription(false).replace("uri=", ""))
+	            .build();
+	
+	    return ResponseEntity.badRequest().body(response);
+    }
 }

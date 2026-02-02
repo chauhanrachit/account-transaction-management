@@ -7,7 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.company.atms.account.entity.Account;
+import com.company.atms.account.entity.AccountStatus;
 import com.company.atms.account.repository.AccountRepository;
+import com.company.atms.common.exception.DuplicateTransactionException;
+import com.company.atms.common.exception.InsufficientBalanceException;
+import com.company.atms.common.exception.InvalidAccountStateException;
 import com.company.atms.transaction.entity.Transaction;
 import com.company.atms.transaction.entity.TransactionType;
 import com.company.atms.transaction.repository.TransactionRepository;
@@ -27,11 +31,21 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public Transaction credit(UUID accountId, String reference, BigDecimal amount, String description) {
 		if (transactionRepository.existsByTransactionReference(reference)) {
-		    throw new IllegalStateException("Duplicate transaction");
+		    throw new DuplicateTransactionException("Duplicate transaction reference: " + reference);
 		}
 		Account account = getAccountForUpdate(accountId);
+		
+		if (account.getAccountStatus() != AccountStatus.ACTIVE) {
+		    throw new InvalidAccountStateException("Account not active");
+		}
 
-		Transaction tx = Transaction.createPending(reference, account, TransactionType.CREDIT, amount, description);
+		Transaction tx = Transaction.createPending(
+				reference, 
+				account, 
+				TransactionType.CREDIT, 
+				amount, 
+				description
+		);
 		transactionRepository.save(tx);
 
 		try {
@@ -45,13 +59,28 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	@Override
+	@Transactional
 	public Transaction debit(UUID accountId, String reference, BigDecimal amount, String description) {
 		if (transactionRepository.existsByTransactionReference(reference)) {
-			throw new IllegalStateException("Duplicate transaction");
+			throw new DuplicateTransactionException("Duplicate transaction reference: " + reference);
 		}
 		Account account = getAccountForUpdate(accountId);
+		
+		if (account.getAccountStatus() != AccountStatus.ACTIVE) {
+		    throw new InvalidAccountStateException("Account not active");
+		}
+		
+        if (account.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientBalanceException("Insufficient balance");
+        }
 
-		Transaction tx = Transaction.createPending(reference, account, TransactionType.DEBIT, amount, description);
+		Transaction tx = Transaction.createPending(
+				reference, 
+				account, 
+				TransactionType.DEBIT, 
+				amount, 
+				description
+		);
 		transactionRepository.save(tx);
 
 		try {
