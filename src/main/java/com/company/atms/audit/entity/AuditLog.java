@@ -19,9 +19,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "audit_logs", indexes = { @Index(name = "idx_audit_entity", columnList = "entity_name"),
+@Table(name = "audit_logs", indexes = { 
+		@Index(name = "idx_audit_entity", columnList = "entity_name"),
 		@Index(name = "idx_audit_entity_id", columnList = "entity_id"),
-		@Index(name = "idx_audit_created_at", columnList = "created_at") })
+		@Index(name = "idx_audit_created_at", columnList = "created_at") 
+})
 @Getter
 @NoArgsConstructor
 public class AuditLog {

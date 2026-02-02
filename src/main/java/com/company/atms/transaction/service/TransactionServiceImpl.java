@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.company.atms.account.entity.Account;
 import com.company.atms.account.entity.AccountStatus;
 import com.company.atms.account.repository.AccountRepository;
+import com.company.atms.audit.entity.AuditAction;
+import com.company.atms.audit.service.AuditService;
 import com.company.atms.common.exception.DuplicateTransactionException;
 import com.company.atms.common.exception.InsufficientBalanceException;
 import com.company.atms.common.exception.InvalidAccountStateException;
@@ -22,10 +24,12 @@ public class TransactionServiceImpl implements TransactionService {
 
 	private final AccountRepository accountRepository;
 	private final TransactionRepository transactionRepository;
+	private final AuditService auditService;
 
-	public TransactionServiceImpl(AccountRepository accountRepository, TransactionRepository transactionRepository) {
+	public TransactionServiceImpl(AccountRepository accountRepository, TransactionRepository transactionRepository, AuditService auditService) {
 		this.accountRepository = accountRepository;
 		this.transactionRepository = transactionRepository;
+		this.auditService=auditService;
 	}
 
 	@Override
@@ -51,9 +55,21 @@ public class TransactionServiceImpl implements TransactionService {
 		try {
 			account.credit(amount);
 			tx.markSuccess();
+			auditService.recordEvent(
+			        AuditAction.TRANSACTION_CREDIT_SUCCESS,
+			        "Transaction",
+			        tx.getId(),
+			        "Credit successful for amount " + amount
+			    );
 			return tx;
 		} catch (Exception ex) {
 			tx.markFailed(ex.getMessage());
+			auditService.recordEvent(
+			        AuditAction.TRANSACTION_CREDIT_FAILED,
+			        "Transaction",
+			        tx.getId(),
+			        ex.getMessage()
+			    );
 			throw ex;
 		}
 	}
@@ -86,9 +102,22 @@ public class TransactionServiceImpl implements TransactionService {
 		try {
 			account.debit(amount);
 			tx.markSuccess();
+			auditService.recordEvent(
+				        AuditAction.TRANSACTION_DEBIT_SUCCESS,
+				        "Transaction",
+				        tx.getId(),
+				        "Debit successful for amount " + amount
+				    );
 			return tx;
 		} catch (Exception ex) {
 			tx.markFailed(ex.getMessage());
+			auditService.recordEvent(
+			        AuditAction.TRANSACTION_DEBIT_FAILED,
+			        "Transaction",
+			        tx.getId(),
+			        ex.getMessage()
+			    );
+			
 			throw ex;
 		}
 	}
