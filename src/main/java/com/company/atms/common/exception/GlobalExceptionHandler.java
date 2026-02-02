@@ -9,12 +9,45 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.dao.DataIntegrityViolationException;
+
 
 import com.company.atms.common.response.ErrorResponse;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler({
+        DuplicateTransactionException.class,
+        InvalidAccountStateException.class,
+        InsufficientBalanceException.class
+    })
+    public ResponseEntity<ErrorResponse> handleBusinessExceptions(RuntimeException ex, WebRequest request) {
+	    ErrorResponse response = ErrorResponse.builder()
+	            .timestamp(Instant.now())
+	            .status(HttpStatus.BAD_REQUEST.value())
+	            .error("Business Rule Violation")
+	            .message(ex.getMessage())
+	            .path(request.getDescription(false).replace("uri=", ""))
+	            .build();
+	
+	    return ResponseEntity.badRequest().body(response);
+    }
+    
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
+
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Duplicate Transaction")
+                .message("Transaction with same reference already exists")
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+    
     @ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex, WebRequest request) {
 
@@ -65,7 +98,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(response);
     }
-
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, WebRequest request) {
 
@@ -78,22 +111,5 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
-    
-    @ExceptionHandler({
-        DuplicateTransactionException.class,
-        InvalidAccountStateException.class,
-        InsufficientBalanceException.class
-    })
-    public ResponseEntity<ErrorResponse> handleBusinessExceptions(RuntimeException ex, WebRequest request) {
-	    ErrorResponse response = ErrorResponse.builder()
-	            .timestamp(Instant.now())
-	            .status(HttpStatus.BAD_REQUEST.value())
-	            .error("Business Rule Violation")
-	            .message(ex.getMessage())
-	            .path(request.getDescription(false).replace("uri=", ""))
-	            .build();
-	
-	    return ResponseEntity.badRequest().body(response);
     }
 }

@@ -76,6 +76,9 @@ public class Transaction {
 
 	@Column(name = "description", length = 255)
 	private String description;
+	
+	@Column(name = "failure_reason", length = 255)
+	private String failureReason;
 
 	public void setAccount(Account account) {
 		this.account = account;
@@ -99,11 +102,18 @@ public class Transaction {
 	}
 
 	public void markSuccess() {
-		this.transactionStatus = TransactionStatus.SUCCESS;
+		if (this.transactionStatus != TransactionStatus.PENDING) {
+	        throw new IllegalStateException("Only PENDING transaction can be marked SUCCESS");
+	    }
+	    this.transactionStatus = TransactionStatus.SUCCESS;
 	}
 
 	public void markFailed(String reason) {
-		this.transactionStatus = TransactionStatus.FAILED;
+		if (this.transactionStatus != TransactionStatus.PENDING) {
+	        throw new IllegalStateException("Only PENDING transaction can be marked FAILED");
+	    }
+	    this.transactionStatus = TransactionStatus.FAILED;
+	    this.failureReason = reason;
 	}
 
 	@Override
