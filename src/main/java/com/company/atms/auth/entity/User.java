@@ -20,22 +20,25 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 public class User {
-	
-	 @Id
-	    @UuidGenerator
-	    @Setter(AccessLevel.NONE)
-	    private UUID id;
 
-	    @Column(nullable = false, unique = true, length = 50)
-	    private String username;
+	@Id
+	@UuidGenerator
+	@Setter(AccessLevel.NONE)
+	private UUID id;
 
-	    @Column(name = "password_hash", nullable = false)
-	    private String passwordHash;
+	@Column(nullable = false, unique = true, length = 50)
+	@Setter
+	private String username;
 
-	    @Enumerated(EnumType.STRING)
-	    @Column(nullable = false, length = 20)
-	    private Role role;
+	@Column(name = "password_hash", nullable = false)
+	@Setter
+	private String passwordHash;
 
-	    @Column(nullable = false)
-	    private boolean active = true;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	@Setter
+	private Role role;
+
+	@Column(nullable = false)
+	private boolean active = true;
 }
