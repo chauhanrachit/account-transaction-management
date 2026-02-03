@@ -26,3 +26,8 @@ spring:
 logging:
   level:
     root: INFO
+
+security:
+  jwt:
+    secret: "dev-secret-key-change-this-later-very-long"
+    expiration-ms: 3600000 # 1 hour

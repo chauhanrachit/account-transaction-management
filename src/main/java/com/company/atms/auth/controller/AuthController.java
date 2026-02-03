@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.company.atms.auth.dto.LoginRequest;
 import com.company.atms.auth.dto.LoginResponse;
+import com.company.atms.auth.jwt.JwtService;
 import com.company.atms.auth.service.CustomUserDetails;
 
 import jakarta.validation.Valid;
@@ -22,9 +23,11 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    public AuthController(AuthenticationManager authenticationManager) {
+    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService) {
         this.authenticationManager = authenticationManager;
+        this.jwtService=jwtService;
     }
 
     @PostMapping("/login")
@@ -38,10 +41,12 @@ public class AuthController {
         								);
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        String token = jwtService.generateToken(userDetails);
 
         LoginResponse response = LoginResponse.builder()
                 .username(userDetails.getUsername())
                 .role(userDetails.getUser().getRole().name())
+                .token(token)
                 .message("Login successful")
                 .build();
 
